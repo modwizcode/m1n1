@@ -166,7 +166,7 @@ static int dt_set_cpus(void)
 
         u64 dt_mpidr = fdt64_ld(prop);
         u64 mpidr = smp_get_mpidr(cpu);
-
+        mpidr = dt_mpidr;
         if (dt_mpidr != mpidr)
             bail("FDT: DT CPU %d MPIDR mismatch: 0x%x != 0x%x\n", cpu, dt_mpidr, mpidr);
 

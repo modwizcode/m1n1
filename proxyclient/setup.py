@@ -10,6 +10,8 @@ iface = UartInterface(uart, debug=False)
 p = M1N1Proxy(iface, debug=False)
 
 try:
+    uart.timeout = 3
+    iface.nop()
     uart.timeout = 0.15
     iface.nop()
     p.set_baud(1500000)

@@ -40,39 +40,39 @@ def cpoll():
     mon.poll()
     print(">")
 
-p.write32(AIC + 0xc, 1)
-p.write32(AIC + 0x10, 0xe0777971)
-p.write32(AIC + 0x18, 0)
-p.write32(AIC + 0x20, 0xffffffff)
-p.write32(AIC + 0x24, 0xffffffff)
-p.write32(AIC + 0x28, 0xffffffff)
-p.write32(AIC + 0x2c, 0xffffffff)
-p.write32(AIC + 0x30, 0xffffffff)
-p.write32(AIC + 0x34, 0xffffffff)
-p.write32(AIC + 0x38, 0xffffffff)
-p.write32(AIC + 0x3c, 0xffffffff)
-p.write32(AIC + 0x40, 0xffffffff)
-p.write32(AIC + 0x38, 0xffffffff)
+#p.write32(AIC + 0xc, 1)
+#p.write32(AIC + 0x10, 0xe0777971)
+#p.write32(AIC + 0x18, 0)
+#p.write32(AIC + 0x20, 0xffffffff)
+#p.write32(AIC + 0x24, 0xffffffff)
+#p.write32(AIC + 0x28, 0xffffffff)
+#p.write32(AIC + 0x2c, 0xffffffff)
+#p.write32(AIC + 0x30, 0xffffffff)
+#p.write32(AIC + 0x34, 0xffffffff)
+#p.write32(AIC + 0x38, 0xffffffff)
+#p.write32(AIC + 0x3c, 0xffffffff)
+#p.write32(AIC + 0x40, 0xffffffff)
+#p.write32(AIC + 0x38, 0xffffffff)
 #p.write32(AIC + 0xc, 0)
 
-p.memset32(AIC_MASK_SET, 0xffffffff, 0x80)
-p.memset32(AIC_SW_GEN_CLR, 0xffffffff, 0x80)
-p.memset32(AIC_TGT_DST, 0x1, 0x1000)
+#p.memset32(AIC_MASK_SET, 0xffffffff, 0x80)
+#p.memset32(AIC_SW_GEN_CLR, 0xffffffff, 0x80)
+#p.memset32(AIC_TGT_DST, 0x1, 0x1000)
 #p.memset32(AIC_MASK_CLR, 0xffffffff, 0x80)
 
 #p.write32(AIC + 0x10, 0xe0777971)
 
-mon.add(AIC + 0x0000, 0x1000)
-mon.add(AIC + 0x2080, 0x040)
+#mon.add(AIC + 0x0000, 0x1000)
+#mon.add(AIC + 0x2080, 0x080)
 mon.add(AIC + 0x4000, 0x200)
-mon.add(AIC + 0x5000, 0x080)
-mon.add(AIC + 0x5080, 0x080)
-mon.add(AIC + 0x5100, 0x080)
-mon.add(AIC + 0x5180, 0x080)
-mon.add(AIC + 0x5200, 0x080)
-mon.add(AIC + 0x5280, 0x080)
-mon.add(AIC + 0x5300, 0x080)
-mon.add(AIC + 0x5380, 0x080)
+#mon.add(AIC + 0x5000, 0x080)
+#mon.add(AIC + 0x5080, 0x080)
+#mon.add(AIC + 0x5100, 0x080)
+#mon.add(AIC + 0x5180, 0x080)
+#mon.add(AIC + 0x5200, 0x080)
+#mon.add(AIC + 0x5280, 0x080)
+#mon.add(AIC + 0x5300, 0x080)
+#mon.add(AIC + 0x5380, 0x080)
 #mon.add(AIC + 0x3000, 0x400)
 #mon.add(AIC + 0x4000, 0x400)
 #mon.add(AIC + 0x8000, 0x20)
@@ -162,177 +162,12 @@ def get_irq_state(irq):
 def test_uart_irq():
     cpoll()
     #p.memset32(AIC_MASK_CLR, 0xffffffff, 0x80)
-
-    print("cleanup")
-    p.write32(UCON, 5)
-    p.write32(UFCON, 0x11)
-    p.write32(UTRSTAT, 0xfff)
-
-    cpoll()
-
-    for irq in range(600, 610):
-        #print("S: ", get_irq_state(irq))
-        p.write32(AIC_SW_GEN_CLR + 4* (irq//32), 1<<(irq%32))
-        #print("S: ", get_irq_state(irq))
-        #print("a")
-        #print("S: ", get_irq_state(irq))
-        p.write32(AIC_MASK_CLR + 4* (irq//32), 1<<(irq%32))
-        #print("S: ", get_irq_state(irq))
-        #print("b")
-
-    irq = 605
-
-    cpoll()
-    print("a")
-    print("S: ", get_irq_state(irq))
-    print("ucon: %x" %p.read32(UCON))
-
-    TX_IRQ_EN = 0x1000
-
-    RX_IRQ_ENABLE = 0x20000
-    RX_IRQ_UNMASK = 0x10000
-
-    RX_IRQ_ENA = 0x20000
-    RX_IRQ_MASK = 0x4000 # defer?
-
-    code = u.malloc(0x1000)
-
-    c = asm.ARMAsm("""
-        ldr x1, =0x235200000
-
-        ldr x3, =0xc000000
-1:
-        subs x3, x3, #1
-        bne 1b
-        mov x2, 'A'
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-        #str w2, [x1, #0x20]
-
-        mov x3, #0x3ff
-        str w3, [x1, #0x10]
-        #str w2, [x1, #0x20]
-        str w0, [x1, #4]
-        ldr w0, [x1, #0x10]
-
-        ldr x3, =0xc00000
-1:
-        subs x3, x3, #1
-        bne 1b
-
-        #mov x3, #0x3ff
-        #str w3, [x1, #0x10]
-        #ldr w2, [x1, #4]
-        #mov x2, #0x205
-        #str w2, [x1, #4]
-        #str w0, [x1, #4]
-        ##ldr w0, [x1, #0x10]
-
-        #ldr x3, =0xc00000
-#1:
-        #subs x3, x3, #1
-        #bne 1b
-
-        ldr w0, [x1, #0x10]
-        #mov w0, w2
-        ret
-""", code)
-    iface.writemem(code, c.data)
-    p.dc_cvau(code, len(c.data))
-    p.ic_ivau(code, len(c.data))
-
-    #RX_IRQ_
-
-    """
-UCON    UTRSTAT
-00200           TX FIFO thresh IRQ delivery enable
-00080   0200    TX FIFO threshold IRQ unmask
-20000   0100    RX IRQ unmask
-10000           RX IRQ delivery enable
-"""
-
-    # edge triggered
-    TX_FIFO_THRESH_CROSSED_IRQ_UNMASK = 0x2000
-
-    TX_IRQ_UNMASK = 0x200
-    TX_EVENT_ENABLE = 0x80
-    RX_EVENT_ENABLE = 0x20000
-    RX_IRQ_UNMASK = 0x10000
-
-    #flags = 0x7ffc0
-    crash = 0x180000
-    no_irqs = 0x21c5c0
-    instant_irqs = 0x3a00
-    #flags = no_irqs | 0x0000
-    #flags = 0x2e5c0
-    #flags = 0x2000
-
-    #flags = 0x30000
-    #flags = 0x80
-    flags = 0x7ff80
-
-
-    val = flags | 0x005
-    #print("ucon<-%x" % val)
-    #p.write32(UCON, val)
-    p.write32(UTRSTAT, 0xfff)
-    print("utrstat=%x" % p.read32(UTRSTAT))
-    ret = p.call(code, val)
-    print("utrstat::%x" % ret)
-    print("utrstat=%x" % p.read32(UTRSTAT))
-    time.sleep(0.5)
-    iface.dev.write(b'1')
-    #print(iface.dev.read(1))
-    time.sleep(0.1)
-    print("ucon: %x" %p.read32(UCON))
-    print("delay")
-    try:
-        p.udelay(500000)
-    except:
-        pass
-    iface.dev.write(bytes(64))
-    p.nop()
-    print("ucon: %x" %p.read32(UCON))
-    print("S: ", get_irq_state(irq))
-
-    #while True:
-        #print("S: ", get_irq_state(irq))
-        #p.write32(UTRSTAT, 0xfff)
-        #print("utrstat=%x" % p.read32(UTRSTAT))
-        #print("ucon: %x" %p.read32(UCON))
-        #print(">S: ", get_irq_state(irq))
-        #p.write32(UCON, flags | 0x005)
-        #print(">ucon: %x" %p.read32(UCON))
-        #time.sleep(0.1)
-
+    print("DAIF:", u.mrs(DAIF))
+    p.write32(AIC_TGT_DST+(605*4), 0xffffffff)
+    print("Dist", p.read32(AIC_TGT_DST+(605*4)))
+    p.write32(AIC_MASK_CLR+4*(605//32), 1<<(605 & 0x1F))
+    print("HW state", get_irq_state(605))
+    print("Reason", p.read32(AIC_INTERRUPT_ACK))
 
 
 def test_smp_ipi():
@@ -398,8 +233,8 @@ def test_smp_affinity():
     p.write32(AIC_SW_GEN_SET,0x8);
     p.write32(AIC_MASK_CLR,0x8);
 
-#test_ipi()
+test_ipi()
 #test_timer()
-#test_uart_irq()
-test_smp_ipi()
-test_smp_affinity()
+test_uart_irq()
+#test_smp_ipi()
+#test_smp_affinity()

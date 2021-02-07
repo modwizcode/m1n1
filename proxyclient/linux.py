@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from setup import *
+import time
 
 payload = open(sys.argv[1], "rb").read()
 dtb = open(sys.argv[2], "rb").read()
@@ -17,8 +18,11 @@ compressed_addr = u.malloc(compressed_size)
 dtb_addr = u.malloc(len(dtb))
 
 print("Loading %d bytes to 0x%x..0x%x..." % (compressed_size, compressed_addr, compressed_addr + compressed_size))
-
+iface.nop()
+a = time.time()
 iface.writemem(compressed_addr, payload, True)
+b = time.time()
+print("Loaded linux kernel in %f seconds" % (b-a))
 
 print("Loading DTB to 0x%x..." % dtb_addr)
 
