@@ -62,17 +62,18 @@ _start:
 if __name__ == "__main__":
     import sys
     code = """
-    ldr x0, =0xDEADBEEF
-    b test
-    mrs x0, spsel
-    svc 1
+    ldr x0, =0x1000 // spintable addr
     %s
-test:
-    b test
     ret
 """ % (" ".join(sys.argv[1:]))
-    c = ARMAsm(code, 0x1234)
+    c = ARMAsm(code, 0x10000)
     c.objdump()
-    assert c.start == 0x1234
-    assert c.test == 0x1240
+    assert c.start == 0x10000
+    code = code.split('\n')
+    code = list(filter(lambda x: len(x.strip()) != 0, code))
+    for addr in range(0, len(c.data), 4):
+        if (addr//4) < len(code):
+            print("{:#010x}, /* {:>24s} */".format(int.from_bytes(c.data[addr:addr+4], "little"), code[addr//4]))
+        else:
+            print("{:#010x}, /* {:>24s} */".format(int.from_bytes(c.data[addr:addr+4], "little"), ""))
 

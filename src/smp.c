@@ -68,8 +68,9 @@ static void smp_start_cpu(int index, int cluster, int core, u64 rvbar, u64 cpu_s
     _reset_stack = secondary_stacks[index] + SECONDARY_STACK_SIZE;
 
     sysop("dmb sy");
-
+    printf("vectors_start: %lx\n", (u64)_vectors_start);
     write64(rvbar, (u64)_vectors_start);
+    printf("vectors_start: %lx\n", read64(rvbar));
 
     // Some kind of system level startup/status bit
     // Without this, IRQs don't work
@@ -97,9 +98,9 @@ void smp_start_secondaries(void)
 {
     printf("Starting secondary CPUs...\n");
 
-    int pmgr_path[8];
+    //int pmgr_path[8];
     u64 pmgr_reg;
-
+/*
     if (adt_path_offset_trace(adt, "/arm-io/pmgr", pmgr_path) < 0) {
         printf("Error getting /arm-io/pmgr node\n");
         return;
@@ -132,8 +133,9 @@ void smp_start_secondaries(void)
 
         cpu_nodes[cpu_id] = node;
     }
-
+*/
     for (int i = 1; i < MAX_CPUS; i++) {
+        /*
         int node = cpu_nodes[i];
 
         if (!node)
@@ -145,8 +147,8 @@ void smp_start_secondaries(void)
             continue;
         if (ADT_GETPROP_ARRAY(adt, node, "cpu-impl-reg", cpu_impl_reg) < 0)
             continue;
-
-        smp_start_cpu(i, reg >> 8, reg & 0xff, cpu_impl_reg[0], pmgr_reg + CPU_START_OFF);
+*/
+        smp_start_cpu(i, i/4, i % 4, 0x23D300010+(8*i), 0x23D300000);
     }
 
     spin_table[0].mpidr = mrs(MPIDR_EL1) & 0xFFFFFF;
