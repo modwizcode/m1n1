@@ -1,16 +1,19 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "proxy.h"
 #include "exception.h"
 #include "heapblock.h"
 #include "kboot.h"
 #include "malloc.h"
 #include "memory.h"
-#include "minilzlib/minlzma.h"
 #include "smp.h"
-#include "tinf/tinf.h"
 #include "types.h"
 #include "uart.h"
 #include "utils.h"
 #include "xnuboot.h"
+
+#include "minilzlib/minlzma.h"
+#include "tinf/tinf.h"
 
 int proxy_process(ProxyRequest *request, ProxyReply *reply)
 {
@@ -218,10 +221,11 @@ int proxy_process(ProxyRequest *request, ProxyReply *reply)
             break;
 
         case P_XZDEC: {
-            u32 output_size = request->args[3];
-            if (XzDecode((void *)request->args[0], request->args[1], (void *)request->args[2],
-                         &output_size))
-                reply->retval = output_size;
+            uint32_t destlen, srclen;
+            destlen = request->args[3];
+            srclen = request->args[1];
+            if (XzDecode((void *)request->args[0], &srclen, (void *)request->args[2], &destlen))
+                reply->retval = destlen;
             else
                 reply->retval = ~0L;
             break;
@@ -231,7 +235,7 @@ int proxy_process(ProxyRequest *request, ProxyReply *reply)
             destlen = request->args[3];
             srclen = request->args[1];
             size_t ret = tinf_gzip_uncompress((void *)request->args[2], &destlen,
-                                              (void *)request->args[0], srclen);
+                                              (void *)request->args[0], &srclen);
             if (ret != TINF_OK)
                 reply->retval = ret;
             else

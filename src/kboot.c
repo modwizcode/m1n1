@@ -5,13 +5,14 @@
 #include "adt.h"
 #include "exception.h"
 #include "kboot.h"
-#include "libfdt/libfdt.h"
 #include "malloc.h"
 #include "memory.h"
 #include "smp.h"
 #include "types.h"
 #include "utils.h"
 #include "xnuboot.h"
+
+#include "libfdt/libfdt.h"
 
 static void *dt = NULL;
 static int dt_bufsize = 0;
@@ -86,7 +87,7 @@ static int dt_set_chosen(void)
 
         const char *format = NULL;
 
-        switch (cur_boot_args.video.depth) {
+        switch (cur_boot_args.video.depth & 0xff) {
             case 32:
                 format = "x8r8g8b8";
                 break;

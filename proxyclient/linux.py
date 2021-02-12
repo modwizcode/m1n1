@@ -1,29 +1,54 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
+import argparse, pathlib
+
+parser = argparse.ArgumentParser(description='(Linux) kernel loader for m1n1')
+parser.add_argument('payload', type=pathlib.Path)
+parser.add_argument('dtb', type=pathlib.Path)
+parser.add_argument('initramfs', nargs='?', type=pathlib.Path)
+parser.add_argument('--compression', choices=['auto', 'none', 'gz', 'xz'], default='auto')
+parser.add_argument('-b', '--bootargs', type=str, metavar='"boot arguments"')
+args = parser.parse_args()
 
 from setup import *
 import time
 
-payload = open(sys.argv[1], "rb").read()
-dtb = open(sys.argv[2], "rb").read()
-if len(sys.argv) > 3:
-    initramfs = open(sys.argv[3], "rb").read()
+if args.compression == 'auto':
+    suffix = args.payload.suffix
+    if suffix == '.gz':
+        args.compression = 'gz'
+    elif suffix == '.xz':
+        args.compression = 'xz'
+    else:
+        raise ValueError('unknown compression for {}'.format(args.payload))
+
+
+payload = args.payload.read_bytes()
+dtb = args.dtb.read_bytes()
+if args.initramfs is not None:
+    initramfs = args.initramfs.read_bytes()
     initramfs_size = len(initramfs)
 else:
     initramfs = None
     initramfs_size = 0
 
-compressed_size = len(payload)
-compressed_addr = u.malloc(compressed_size)
+if args.bootargs is not None:
+    bootargs = bytes(args.bootargs, encoding="utf-8")
+    print('Setting boot args: "{}"'.format(args.bootargs))
+    bootargs_addr = u.malloc(len(bootargs) + 1)
+    iface.writemem(bootargs_addr, bootargs, len(bootargs))
+    p.memset8(bootargs_addr + len(bootargs) , 0, 1)
+    p.kboot_set_bootargs(bootargs_addr)
+
+
+if args.compression != 'none':
+    compressed_size = len(payload)
+    compressed_addr = u.malloc(compressed_size)
+
+    print("Loading %d bytes to 0x%x..0x%x..." % (compressed_size, compressed_addr, compressed_addr + compressed_size))
+    iface.writemem(compressed_addr, payload, True)
 
 dtb_addr = u.malloc(len(dtb))
-
-print("Loading %d bytes to 0x%x..0x%x..." % (compressed_size, compressed_addr, compressed_addr + compressed_size))
-iface.nop()
-a = time.time()
-iface.writemem(compressed_addr, payload, True)
-b = time.time()
-print("Loaded linux kernel in %f seconds" % (b-a))
-
 print("Loading DTB to 0x%x..." % dtb_addr)
 
 iface.writemem(dtb_addr, dtb)
@@ -47,17 +72,21 @@ if p.kboot_prepare_dt(dtb_addr):
     print("DT prepare failed")
     sys.exit(1)
 
-#kernel_size = p.xzdec(compressed_addr, compressed_size)
-
-#if kernel_size < 0:
-    #raise Exception("Decompression header check error!",)
-
-#print("Uncompressed kernel size: %d bytes" % kernel_size)
-print("Uncompressing...")
-
 iface.dev.timeout = 40
 
-kernel_size = p.gzdec(compressed_addr, compressed_size, kernel_base, kernel_size)
+if args.compression == 'none':
+    kernel_size = len(payload)
+    print("Loading %d bytes to 0x%x..0x%x..." % (kernel_size, kernel_base, kernel_base + kernel_size))
+    iface.writemem(kernel_base, payload, True)
+elif args.compression == 'gz':
+    print("Uncompressing gz ...")
+    kernel_size = p.gzdec(compressed_addr, compressed_size, kernel_base, kernel_size)
+elif args.compression == 'xz':
+    print("Uncompressing xz ...")
+    kernel_size = p.xzdec(compressed_addr, compressed_size, kernel_base, kernel_size)
+else:
+    raise ValueError('unsupported compression {}'.format(args.compression))
+
 print(kernel_size)
 
 if kernel_size < 0:

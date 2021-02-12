@@ -1,38 +1,14 @@
-import serial, os, struct, sys, time
+import serial, os, struct, sys, time, json, os.path
 from proxy import *
 from tgtypes import *
 import malloc
 
-CurrentEL = 3,0,4,2,2
-DAIF = 3,3,4,2,1
+def load_registers():
+    data = json.load(open(os.path.join(os.path.dirname(__file__), "regs.json")))
+    for reg in data:
+        yield reg["name"], reg["enc"]
 
-DAIFSet = 0,3,4,2,6
-DAIFClr = 0,3,4,2,7
-
-TPIDR_EL0 = 3,3,13,0,2
-
-CNTFRQ_EL0 = 3,3,14,0,0
-CNTPCT_EL0 = 3,3,14,0,1
-CNTP_TVAL_EL0 = 3,3,14,2,0
-CNTP_CTL_EL0 = 3,3,14,2,1
-CNTP_CVAL_EL0 = 3,3,14,2,2
-
-SCTLR_EL1 = 3,0,1,0,0
-TTBR0_EL1 = 3,0,2,0,0
-TTBR0_EL2 = 3,4,2,0,0
-TCR_EL1 = 3,0,2,0,2
-TCR_EL2 = 3,4,2,0,2
-HCR_EL2 = 3,4,1,1,0
-
-MIDR_EL1 = 3,0,0,0,0
-MPIDR_EL1 = 3,0,0,0,5
-ID_AA64MMFR0_EL1 = 3,0,0,7,0
-ID_AA64MMFR1_EL1 = 3,0,0,7,1
-ID_AA64MMFR2_EL1 = 3,0,0,7,2
-
-OSLAR_EL1 = 2,0,1,0,4
-
-ACTLR_EL1 = 3,0,1,0,1
+globals().update(dict(load_registers()))
 
 class ProxyUtils(object):
     def __init__(self, p):
@@ -77,7 +53,13 @@ class ProxyUtils(object):
         self.proxy.dc_cvau(self.code_buffer, 8)
         self.proxy.ic_ivau(self.code_buffer, 8)
 
-        return self.proxy.call(self.code_buffer)
+        self.proxy.set_exc_guard(self.proxy.GUARD_MARK)
+        retval = self.proxy.call(self.code_buffer)
+        cnt = self.proxy.get_exc_count()
+        self.proxy.set_exc_guard(self.proxy.GUARD_OFF)
+        if cnt:
+            raise ProxyError("Exception occurred")
+        return retval
 
     def msr(self, reg, val):
         op0, op1, CRn, CRm, op2 = reg
@@ -91,7 +73,12 @@ class ProxyUtils(object):
         self.proxy.dc_cvau(self.code_buffer, 8)
         self.proxy.ic_ivau(self.code_buffer, 8)
 
+        self.proxy.set_exc_guard(self.proxy.GUARD_SKIP)
         self.proxy.call(self.code_buffer, val)
+        cnt = self.proxy.get_exc_count()
+        self.proxy.set_exc_guard(self.proxy.GUARD_OFF)
+        if cnt:
+            raise ProxyError("Exception occurred")
 
     def inst(self, op):
         func = struct.pack("<II", op, 0xd65f03c0)
@@ -100,7 +87,12 @@ class ProxyUtils(object):
         self.proxy.dc_cvau(self.code_buffer, 8)
         self.proxy.ic_ivau(self.code_buffer, 8)
 
+        self.proxy.set_exc_guard(self.proxy.GUARD_SKIP)
         self.proxy.call(self.code_buffer)
+        cnt = self.proxy.get_exc_count()
+        self.proxy.set_exc_guard(self.proxy.GUARD_OFF)
+        if cnt:
+            raise ProxyError("Exception occurred")
 
 class RegMonitor(object):
     def __init__(self, utils):
