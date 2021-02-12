@@ -13,7 +13,7 @@
 		#size-cells = <2>;
 		ranges;
 
-		bootargs = "earlycon debug";
+		bootargs = "earlycon keep_bootcon loglevel=15 debug";
 		stdout-path = "serial0:1500000";
 
 		framebuffer0: framebuffer@0 {
