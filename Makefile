@@ -1,5 +1,5 @@
 ARCH := aarch64-linux-gnu-
-
+USE_CLANG := 1
 ifeq ($(USE_CLANG),1)
 CC := clang --target=$(ARCH)
 AS := clang --target=$(ARCH)

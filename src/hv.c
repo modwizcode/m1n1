@@ -18,8 +18,8 @@ u64 hv_tick_interval;
 
 void hv_init(void)
 {
-    pcie_shutdown();
-    smp_start_secondaries();
+    //pcie_shutdown();
+    //smp_start_secondaries();
     hv_wdt_init();
 
     // Enable physical timer for EL1
@@ -60,8 +60,11 @@ void hv_start(void *entry, u64 regs[4])
     if (gxf_enabled())
         gl2_call(hv_set_gxf_vbar, 0, 0, 0, 0);
 
-    hv_wdt_start();
+    printf("Starting wdt.\n");
+    //hv_wdt_start();
+    printf("Starting arm tick.\n");
     hv_arm_tick();
+    printf("Entering guest.\n");
     hv_enter_guest(regs[0], regs[1], regs[2], regs[3], entry);
     hv_wdt_stop();
 
@@ -135,7 +138,9 @@ void hv_set_elr(u64 val)
 void hv_arm_tick(void)
 {
     msr(CNTP_TVAL_EL0, hv_tick_interval);
+    printf("Set TVAL\n");
     msr(CNTP_CTL_EL0, CNTx_CTL_ENABLE);
+    printf("Set CTL\n");
 }
 
 void hv_tick(u64 *regs)

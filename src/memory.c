@@ -423,7 +423,7 @@ void mmu_init(void)
     mmu_init_pagetables();
     mmu_add_default_mappings();
     mmu_configure();
-    mmu_init_sprr();
+    //mmu_init_sprr();
 
     // Enable EL0 memory access by EL1
     msr(PAN, 0);

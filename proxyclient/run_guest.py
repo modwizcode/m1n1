@@ -19,7 +19,7 @@ bootstrap_port(iface, p)
 u = ProxyUtils(p, heap_size = 128 * 1024 * 1024)
 
 hv = HV(iface, p, u)
-
+#hv.novm = True
 hv.init()
 
 if len(args.boot_args) > 0:

@@ -370,7 +370,7 @@ class GuardedHeap:
 
 def bootstrap_port(iface, proxy):
     try:
-        iface.dev.timeout = 0.15
+        iface.dev.timeout = 3
         iface.nop()
         proxy.set_baud(1500000)
     except UartTimeout:

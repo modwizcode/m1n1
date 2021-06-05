@@ -58,6 +58,8 @@ class Serial(serial.Serial):
     def _reset_input_buffer(self):
         return
 
+    def _set_special_baudrate(self,baud):
+        return
     def reset_input_buffer(self):
         return
 
@@ -168,7 +170,7 @@ class UartInterface:
         #d = self.dev.read(1)
         #while d != "":
             #d = self.dev.read(1)
-        self.dev.timeout = 3
+        self.dev.timeout = 10
         self.tty_enable = True
         self.handlers = {}
         self.evt_handlers = {}
@@ -951,9 +953,9 @@ class M1N1Proxy:
     def fb_shutdown(self):
         return self.request(self.P_FB_SHUTDOWN)
     def fb_blit(self, x, y, w, h, ptr, stride):
-        return self.request(self.P_FB_BLIP, x, y, w, h, ptr, stride)
+        return self.request(self.P_FB_BLIT, x, y, w, h, ptr, stride)
     def fb_unblit(self, x, y, w, h, ptr, stride):
-        return self.request(self.P_FB_UNBLIP, x, y, w, h, ptr, stride)
+        return self.request(self.P_FB_UNBLIT, x, y, w, h, ptr, stride)
     def fb_fill(self, color):
         return self.request(self.P_FB_FILL, x, y, w, h, color)
     def fb_clear(self, color):

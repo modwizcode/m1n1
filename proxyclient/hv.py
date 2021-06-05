@@ -203,12 +203,12 @@ class HV:
             (3, 5, 15, 10, 1), # M1RACLES mitigation
         ))
         shadow = {
-            #SPRR_CONFIG_EL1,
-            #SPRR_PERM_EL0,
-            #SPRR_PERM_EL1,
+            SPRR_CONFIG_EL1,
+            SPRR_PERM_EL0,
+            SPRR_PERM_EL1,
             VMSA_LOCK_EL1,
-            #SPRR_UNK1_EL1,
-            #SPRR_UNK2_EL1,
+            SPRR_UNK1_EL1,
+            SPRR_UNK2_EL1,
         }
         ro = {
             ACC_CFG_EL1,
@@ -589,7 +589,10 @@ class HV:
             ("/arm-io/gfx-asc", True),
             ("/arm-io/sgx", True),
         ):
-            node = self.adt[path]
+            try:
+              node = self.adt[path]
+            except:
+                continue
             for index in range(len(node.reg)):
                 addr, size = node.get_reg(index)
                 if addr & 0x3fff:
@@ -645,9 +648,9 @@ class HV:
         # Trap dangerous things
         hacr = HACR(0)
         if not self.novm:
-            #hacr.TRAP_CPU_EXT = 1
-            #hacr.TRAP_SPRR = 1
-            #hacr.TRAP_GXF = 1
+            hacr.TRAP_CPU_EXT = 1
+            hacr.TRAP_SPRR = 1
+            hacr.TRAP_GXF = 1
             hacr.TRAP_CTRR = 1
             hacr.TRAP_EHID = 1
             hacr.TRAP_HID = 1
@@ -657,28 +660,27 @@ class HV:
         self.u.msr(HACR_EL2, hacr.value)
 
         # Enable AMX
-        amx_ctl = AMX_CTL(self.u.mrs(AMX_CTL_EL1))
-        amx_ctl.EN_EL1 = 1
-        self.u.msr(AMX_CTL_EL1, amx_ctl.value)
+        #amx_ctl = AMX_CTL(self.u.mrs(AMX_CTL_EL1))
+        #amx_ctl.EN_EL1 = 1
+        #self.u.msr(AMX_CTL_EL1, amx_ctl.value)
 
         # Set guest AP keys
-        self.u.msr(APVMKEYLO_EL2, 0x4E7672476F6E6147)
-        self.u.msr(APVMKEYHI_EL2, 0x697665596F755570)
-        self.u.msr(APSTS_EL12, 1)
+        #self.u.msr(APVMKEYLO_EL2, 0x4E7672476F6E6147)
+        #self.u.msr(APVMKEYHI_EL2, 0x697665596F755570)
+        #self.u.msr(APSTS_EL12, 1)
+        #self.p.hv_map_vuart(0x2_35200000, getattr(IODEV, "UART"))
 
-        self.p.hv_map_vuart(0x2_35200000, getattr(IODEV, self.iodev.name + "_SEC"))
-
-        actlr = ACTLR(self.u.mrs(ACTLR_EL12))
-        actlr.EnMDSB = 1
-        self.u.msr(ACTLR_EL12, actlr.value)
+        #actlr = ACTLR(self.u.mrs(ACTLR_EL12))
+        #actlr.EnMDSB = 1
+        #self.u.msr(ACTLR_EL12, actlr.value)
 
         self.setup_adt()
 
     def setup_adt(self):
-        self.adt["product"].product_name += " on m1n1 hypervisor"
-        self.adt["product"].product_description += " on m1n1 hypervisor"
-        soc_name = "Virtual " + self.adt["product"].product_soc_name + " on m1n1 hypervisor"
-        self.adt["product"].product_soc_name = soc_name
+        #self.adt["product"].product_name += " on m1n1 hypervisor"
+        #self.adt["product"].product_description += " on m1n1 hypervisor"
+        #soc_name = "Virtual " + self.adt["product"].product_soc_name + " on m1n1 hypervisor"
+        #self.adt["product"].product_soc_name = soc_name
 
         if self.iodev in (IODEV.USB0, IODEV.USB1):
             idx = int(str(self.iodev)[-1])
@@ -779,12 +781,12 @@ class HV:
 
         #image = macho.prepare_image(load_hook)
         image = macho.prepare_image()
-        sepfw_start, sepfw_length = self.u.adt["chosen"]["memory-map"].SEPFW
-        tc_start, tc_size = self.u.adt["chosen"]["memory-map"].TrustCache
+        #sepfw_start, sepfw_length = self.u.adt["chosen"]["memory-map"].SEPFW
+        #tc_start, tc_size = self.u.adt["chosen"]["memory-map"].TrustCache
 
         image_size = align(len(image))
-        sepfw_off = image_size
-        image_size += align(sepfw_length)
+        #sepfw_off = image_size
+        #image_size += align(sepfw_length)
         self.bootargs_off = image_size
         bootargs_size = 0x4000
         image_size += bootargs_size
@@ -795,8 +797,8 @@ class HV:
         guest_base += 16 << 20 # ensure guest starts within a 16MB aligned region of mapped RAM
         adt_base = guest_base
         guest_base += align(self.u.ba.devtree_size)
-        tc_base = guest_base
-        guest_base += align(tc_size)
+        #tc_base = guest_base
+        #guest_base += align(tc_size)
         self.guest_base = guest_base
         mem_top = self.u.ba.phys_base + self.u.ba.mem_size
         mem_size = mem_top - phys_base
@@ -808,24 +810,24 @@ class HV:
 
         print(f"Mapping guest physical memory...")
         self.map_hw(0x800000000, 0x800000000, self.u.ba.phys_base - 0x800000000)
-        self.map_hw(phys_base, phys_base, self.u.ba.mem_size_actual - phys_base + 0x800000000)
+        self.map_hw(phys_base, phys_base, self.u.ba.mem_size - phys_base + 0x800000000)
 
         print(f"Loading kernel image (0x{len(image):x} bytes)...")
         self.u.compressed_writemem(guest_base, image, True)
         self.p.dc_cvau(guest_base, len(image))
         self.p.ic_ivau(guest_base, len(image))
 
-        print(f"Copying SEPFW (0x{sepfw_length:x} bytes)...")
-        self.p.memcpy8(guest_base + sepfw_off, sepfw_start, sepfw_length)
+#        print(f"Copying SEPFW (0x{sepfw_length:x} bytes)...")
+ #       self.p.memcpy8(guest_base + sepfw_off, sepfw_start, sepfw_length)
 
-        print(f"Copying TrustCache (0x{tc_size:x} bytes)...")
-        self.p.memcpy8(tc_base, tc_start, tc_size)
+#        print(f"Copying TrustCache (0x{tc_size:x} bytes)...")
+ #       self.p.memcpy8(tc_base, tc_start, tc_size)
 
         print(f"Adjusting addresses in ADT...")
-        self.adt["chosen"]["memory-map"].SEPFW = (guest_base + sepfw_off, sepfw_length)
-        self.adt["chosen"]["memory-map"].TrustCache = (tc_base, tc_size)
-        self.adt["chosen"]["memory-map"].DeviceTree = (adt_base, align(self.u.ba.devtree_size))
-        self.adt["chosen"]["memory-map"].BootArgs = (guest_base + self.bootargs_off, bootargs_size)
+ #       self.adt["chosen"]["memory-map"].SEPFW = (guest_base + sepfw_off, sepfw_length)
+#        self.adt["chosen"]["memory-map"].TrustCache = (tc_base, tc_size)
+        #self.adt["chosen"]["memory-map"].DeviceTree = (adt_base, align(self.u.ba.devtree_size))
+        #self.adt["chosen"]["memory-map"].BootArgs = (guest_base + self.bootargs_off, bootargs_size)
 
         adt_blob = self.adt.build()
         print(f"Uploading ADT (0x{len(adt_blob):x} bytes)...")
@@ -866,10 +868,10 @@ class HV:
         self.p.fb_shutdown()
 
         print(f"Enabling SPRR...")
-        self.u.msr(SPRR_CONFIG_EL1, 1)
+        #self.u.msr(SPRR_CONFIG_EL1, 1)
 
         print(f"Enabling GXF...")
-        self.u.msr(GXF_CONFIG_EL1, 1)
+        #self.u.msr(GXF_CONFIG_EL1, 1)
 
         print(f"Jumping to entrypoint at 0x{self.entry:x}")
 

@@ -90,6 +90,7 @@ void hv_wdt_breadcrumb(char c)
 
 void hv_wdt_init(void)
 {
+    /*
     int node = adt_path_offset(adt, "/cpus/cpu0");
     if (node < 0) {
         printf("Error getting /cpus/cpu0 node\n");
@@ -101,8 +102,8 @@ void hv_wdt_init(void)
         printf("Error getting cpu-uttdbg-reg property\n");
         return;
     }
-
-    cpu_dbg_base = reg[0];
+    */
+    cpu_dbg_base = 0x23D2B0000;//reg[0];
 }
 
 void hv_wdt_start(void)

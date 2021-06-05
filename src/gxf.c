@@ -19,6 +19,7 @@ void *gl2_stack_base = &gl2_stack[GL_STACK_SIZE];
 
 bool gxf_enabled(void)
 {
+    return false;
     if (!(mrs(SYS_IMP_APL_SPRR_CONFIG_EL1) & SPRR_CONFIG_EN))
         return false;
 

@@ -399,8 +399,8 @@ def test_smp_affinity():
     p.write32(AIC_SW_GEN_SET,0x8);
     p.write32(AIC_MASK_CLR,0x8);
 
-#test_ipi()
-#test_timer()
-#test_uart_irq()
-test_smp_ipi()
+test_ipi()
+test_timer()
+test_uart_irq()
+#test_smp_ipi()
 test_smp_affinity()
